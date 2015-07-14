@@ -1,0 +1,21 @@
+   	
+//    	Random rand = new Random();
+//    	int max = 0, min = 0;
+    	
+    	Path specFile = Paths.get("/home/justin/jkcode/xper_sach7/SerialTest/bin/stimSpecTest_1.txt");
+    	
+    	byte[] fileBuff;
+    	
+    	fileBuff = Files.readAllBytes(specFile);
+    	int num = fileBuff.length;
+    	
+    	for(int i = 0; i < num; i++){
+    		
+    		if(fileBuff[i] == '%'){
+    			while(fileBuff[++i] != '\n'){}
+    			
+    		}
+    		System.out.print((char)(fileBuff[i]));
+    	}
+    	
+    	
