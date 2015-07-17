@@ -1,7 +1,7 @@
 
 
 import java.util.Arrays;
-import java.util.Vector;
+//import java.util.Vector;
 
 import jssc.SerialPort;
 import jssc.SerialPortException;
