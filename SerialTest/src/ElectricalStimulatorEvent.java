@@ -5,6 +5,7 @@ import jssc.SerialPortException;
 
 public  class ElectricalStimulatorEvent 
 	implements SerialPortEventListener {
+	// July 16 2015
 	
 	SerialPort portReference;
 	ElectricalStimulator stimRef;

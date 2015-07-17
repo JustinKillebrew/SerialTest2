@@ -31,7 +31,7 @@ public class ElectricalStimulator {
 	byte[]  cmd = new byte[PACKET_SIZE_IN_BYTES];
 	byte[] readBuff = new byte[PACKET_SIZE_IN_BYTES];
 	
-	byte putDlyh,putDlyl,putDach,putDacl,putSw;
+	byte putDlyh,putDlyl,putDach,putDacl,putSw; 
 	
 	// the serial port object
 	SerialPort serialPort;
@@ -117,8 +117,8 @@ void trigger4(int ch)
 		cmd[index] = (byte) 'T';
 		index++;
 		
-		System.out.printf("Data buffer: %X %X %X %X\n",
-	 		cmd[0],cmd[1],cmd[2],cmd[3]);
+//		System.out.printf("Data buffer: %X %X %X %X\n",
+//	 		cmd[0],cmd[1],cmd[2],cmd[3]);
 	 	
 		try {
 			serialPort.writeBytes(cmd);
@@ -152,9 +152,9 @@ void trigger4(int ch)
 		index++;
 		cmd[index] = (byte) 'T';
 		index++;
-		System.out.printf("Data buffer: %X  %X  %X  %X  %X  %X  %X  %X \n",
-	 		cmd[0],cmd[1],cmd[2],cmd[3],
-	 		cmd[4],cmd[5],cmd[6],cmd[7]);
+//		System.out.printf("Data buffer: %X  %X  %X  %X  %X  %X  %X  %X \n",
+//	 		cmd[0],cmd[1],cmd[2],cmd[3],
+//	 		cmd[4],cmd[5],cmd[6],cmd[7]);
 		try {
 			serialPort.writeBytes(cmd);
 		} catch (SerialPortException e) {
@@ -229,15 +229,9 @@ void trigger4(int ch)
 	    boolean  put4(int ch, int id, int delay, int current, int sw )
 	    {
 	    	int dac = 0;
-	//    	int pattern = 0;
-	//    	final int CommandSizeInBytes = 14; // was 128, but only need 14 ... JK 6 July 2015
-
 	    	byte[]  cmd = new byte[BUFFER_SIZE + 6];
-	//    	byte[]  sendBuffer = new byte[BUFFER_SIZE];
-
 	    	int  index = 0;
-
-    	
+  	
 	    	if(true ){
 	    		// Code values of 0, 1 and 2 correspond to delays of 65536, 65537 and 65538.
 	    		if (delay > 65538)
@@ -249,14 +243,12 @@ void trigger4(int ch)
 	    		dac = current % 65536;
 	    	}
 	    	putSw = (byte) sw;
+	    	
 	    	// Send command
 	    	putDlyh=(byte)(delay / 256);
 	    	putDlyl=(byte)(delay - 256 * putDlyh);
 	    	putDach=(byte)(dac / 256);
 	    	putDacl=(byte)(dac - 256 * putDach);
-	    	//System.out.println("Put4: " + ch + " " + id + " " + putDlyh  + " "  + putDlyl + " " + dac  + " " +   putSw);
-
-
 	    	isCmdReceived = false;
 	    	isGetValueMatched = true;
 	    	
@@ -299,8 +291,7 @@ void trigger4(int ch)
 	    	cmd[index] = (byte) putDach;
 	    	index++;
 	       	
-	    	
-		   	cmd[index] = (byte)putDacl;
+	    	 	cmd[index] = (byte)putDacl;
 	    	index++;
 	    	
 	    	cmd[index] = (byte) putSw;
@@ -463,50 +454,46 @@ void trigger4(int ch)
 	    }
 
 
-	    
 
-
+	    // get4() 
+	    // forwards the get command to the appropriate slave controller (ch)
 	    boolean get4(int ch, int id)  {
 
-	    	byte[] r = new byte[128];
-	    	int dly,dac,sw;
-	    	double cur;
+	    
+//	    	int dly,dac,sw;
+//	    	double cur;
 	    	int n;
-	    	byte[] cmd = new byte[128];
+	    	byte[] localCmd = new byte[9];
 	    	int index;
-
-	    	// Send command
-
-	    	//usb_fwrite(char([240 240 'F' ch 2 6 'G' id]));
 
 	    	isCmdReceived = false;
 	    	n = 0;
 	    	index = 0;
-	    	cmd[index] = (byte) 240;
+	    	localCmd[index] = (byte) 240;
 	    	index++;
-	    	cmd[index] =  (byte) 240;
+	    	localCmd[index] =  (byte) 240;
 	    	index++;
-	    	cmd[index] = (byte) 240;
+	    	localCmd[index] = (byte) 240;
 	    	index++;
-	    	cmd[index] = 'F';
+	    	localCmd[index] = 'F';
 	    	index++;
-	    	cmd[index] = (byte) ch;
+	    	localCmd[index] = (byte) ch;
 	    	index++;
-	    	cmd[index] = 2;
+	    	localCmd[index] = 2;
 	    	index++;
-	    	cmd[index] = 6;
+	    	localCmd[index] = 6;
 	    	index++;
-	    	cmd[index] = 'G';
+	    	localCmd[index] = 'G';				// command to forward: get event from storage.  returns 6 bytes: dlyh, dlyl, dach, dacl, pat, @
 	    	index++;
-	    	cmd[index] =  (byte) id;
+	    	localCmd[index] =  (byte) id; // 
 	    	index++;
-	    	System.out.printf("get4() Data buffer: %X %X %X %X %X %X %X %X %X\n",
-	    			cmd[0],cmd[1],cmd[2],cmd[3],
-	    			cmd[4],cmd[5],cmd[6],cmd[7],
-	    			cmd[8]);
+	    	System.out.printf("get4() cmd buffer: %X %X %X %X %X %X %X %X %X\n",
+	    			localCmd[0],localCmd[1],localCmd[2],localCmd[3],
+	    			localCmd[4],localCmd[5],localCmd[6],localCmd[7],
+	    			localCmd[8]);
 	    	
 	    	try {
-				serialPort.writeBytes(cmd);
+				serialPort.writeBytes(localCmd);
 			} catch (SerialPortException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -521,9 +508,9 @@ void trigger4(int ch)
 
 	    boolean get32(int ch, int id) {
 
-	    	byte[]  r = new byte[128];
-	    	int dly,dac,sw;
-	    	double cur;
+//	    	byte[]  r = new byte[128];
+//	    	int dly,dac,sw;
+//	    	double cur;
 	    	int n;
 	    	
 	    	byte[]  cmd = new byte[BUFFER_SIZE + 6];
@@ -631,7 +618,54 @@ void trigger4(int ch)
 	    }
 
     
-	    // verify CRC
+
+	    void queryBattery() {
+
+	    	byte[] localCmd = new byte[4];
+	    	double Vpos = 0.0;
+	    	double Vneg = 0.0;
+	    	
+	    	int index;
+	    	isCmdReceived = false;
+	    	index = 0;
+	    	localCmd[index] = (byte) 240;
+	    	index++;
+	    	localCmd[index] = (byte) 240;
+	    	index++;
+	    	localCmd[index] = (byte) 240;
+	    	index++;
+	    	localCmd[index] = (byte) 'B';
+	    	index++;
+
+			
+	    	try {
+	    		// make sure the input buffer is clear
+	    		serialPort.purgePort(serialPort.PURGE_RXCLEAR | serialPort.PURGE_TXCLEAR);
+	    		
+				serialPort.writeBytes(localCmd);
+				Thread.sleep(100);
+				
+				int n = serialPort.getInputBufferBytesCount();
+				byte[] localRead = new byte[n];
+				
+				localRead = serialPort.readBytes(n, READ_TIMEOUT);				
+		    	
+				System.out.printf("   queryBattery() read %d bytes  : %2X %2X %2X %2X %2X %2X %2X \n", n,
+		    			localRead[0], localRead[1], localRead[2], localRead[3],
+		    			localRead[4], localRead[5], localRead[6]);
+		    	Vpos = 15 * (localRead[1] * 256 + localRead[2]) /  4096;
+		    	Vneg = 15 * (localRead[3] * 256 + localRead[4]) /  4096 - 10;
+				
+		    	System.out.printf("  queryBattery() : Vpos = %4.4f, Vneg = %4.4f \n\n", Vpos, Vneg);
+				
+			} catch (SerialPortException | SerialPortTimeoutException | InterruptedException  e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+	    	
+	    	CommandType=CMD.BATCMD;	
+	    }
+
 	    
 
 
