@@ -1,5 +1,6 @@
 package somlab;
 
+import somlab.ElectricalStimulator.CMD;
 import jssc.SerialPortEvent;
 import jssc.SerialPortEventListener;
 import jssc.SerialPort;
@@ -21,17 +22,36 @@ public  class ElectricalStimulatorEvent
     public  void serialEvent(SerialPortEvent serialPortEvent){
     	
     	if(serialPortEvent.isRXCHAR()){
+    		
     		int n = serialPortEvent.getEventValue();
-    		if(n> 1){ //	ElectricalStimulator.PACKET_SIZE_IN_BYTES){//Check bytes count in the input buffer
+    		
+    		if(n> 1){ 														//Check bytes count in the input buffer
+         			
+    			// let the main thread read this
+        		if(stimRef.CommandType == CMD.PINGCMD){
+        			//System.out.println("Event:: PINGCMD");
+        			return;
+        		}
+        		
                 //Read data, if  bytes available 
                 try {
-                	//stimRef.readBuff = portReference.readBytes();   
-                	hexStr = portReference.readHexString(n); //ElectricalStimulator.PACKET_SIZE_IN_BYTES);
+               
+                	if(stimRef.CommandType == CMD.BATCMD){
+                		stimRef.readBuff = portReference.readBytes();   
+                		System.out.println("Event:: BATCMD");
+                		stimRef.processIncomingBytes(stimRef.readBuff, stimRef.CommandType.BATCMD);
+                	}
+                	else if(stimRef.CommandType == CMD.PUTCMD || stimRef.CommandType == CMD.SINGLETRIGGERCMD){
+                		
+                		hexStr = portReference.readHexString(n); 
+                		
+	                	if(hexStr.compareTo("00 F0 40 40") != 0){
+	                		System.out.println("Received :" + hexStr);
+	                	}
+	                	 //System.out.println(String.format("%X",  stimRef.readBuff));
+                	}
                 	
-                   // byte buffer[] = portReference.readBytes(10);
-                   //System.out.println("Received :" + stimRef.readBuff);
-                	System.out.println("Received :" + hexStr);
-                	 //System.out.println(String.format("%X",  stimRef.readBuff));
+                	
                 }
                 catch (SerialPortException ex) {
                     System.out.println(ex);

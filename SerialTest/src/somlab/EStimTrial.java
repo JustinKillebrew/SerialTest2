@@ -39,7 +39,7 @@ public class EStimTrial {
 
 			params.add(new Point(ch, id, delay, amp, sw));
 
-			System.out.printf("\nEStimTrial() : %3d : %3d, %5d, %9d, %9d, %2d", trialNum, ch, id, delay, amp, sw);
+			//System.out.printf("\nEStimTrial() : %3d : %3d, %5d, %9d, %9d, %2d", trialNum, ch, id, delay, amp, sw);
 
 		}
 	}

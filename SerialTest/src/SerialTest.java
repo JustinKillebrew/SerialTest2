@@ -1,67 +1,65 @@
 import java.io.IOException;
-//import java.util.ArrayList;
-//import java.util.List;
-//import java.nio.charset.Charset;
-//import java.nio.file.Files;
-//import java.nio.file.Path;
-//import java.util.Iterator;
-//import java.util.ListIterator;
-//import java.util.Random;
+import java.util.Vector;
+import java.util.ArrayList;
+import java.util.List;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Iterator;
+import java.util.ListIterator;
+import java.util.Random;
 
+import somlab.ElectricalStimulator;
 
 
 public class SerialTest {	 
 	
     public static void main(String[] args) throws InterruptedException, IOException {
-    	
- 
-    	
+    
     	ElectricalStimulator estim = new ElectricalStimulator();
     	Thread.sleep(50);
     	int sleepTimeMs = 100;
+    	int numTrials = 0;
     	
     	long startTime = System.currentTimeMillis();
     	long stopTime = startTime;
-
-    	estim.put4(0, 0, 313, 521, 3);
-    	Thread.sleep(sleepTimeMs  * 1);
-    	estim.get4(0, 0);
-//    	int numPoints = 0;
- 	
-//   	List<Integer> params = new ArrayList<>();    	
-//    	for (String line : Files.readAllLines(Paths.get("/home/justin/git/somlab/SerialTest/bin/StimCmd_4Chan_50msDur.txt"), Charset.defaultCharset())) {
-//    		// clear List
-//    		params.clear();
-//    		
-//    		// 1 trial per line
-//    		for (String part : line.split("\\s+")) {
-//    			Integer i = Integer.valueOf(part);
-//    			params.add(i);
-//    		}
-//    		numPoints =  (params.size() - 1)  /  5;
-//    		System.out.println("Trial " + params.get(0) + " has " + numPoints + " points");
-//    		
-//    		int id = 0;
-//    		for(int i = 1; i < params.size(); i++){	
-//    			//estim.put32(params.get(i++), params.get(i++), params.get(i++), params.get(i++), params.get(i));
-//    			estim.put4(params.get(i++), params.get(i++), params.get(i++), params.get(i++), params.get(i));
-//    			
-//    			Thread.sleep(sleepTimeMs / 2);
-//    			estim.get4(0,  id++);
-//    		}
-//    		System.out.println("Press enter to trigger trial & continue");
-//    		System.in.read();
-//    		
-//        	estim.trigger4(0);
-//        	//Thread.sleep(sleepTimeMs * 5);
-//      		
-//    	}
-//    	
-    
+    	
+    	
+    	// make sure the stimulator is powered up!!
+    	if(estim.isOff()){
+    		System.out.println("Stimulator is off ... ");
+    		estim.shutdown();
+    		
+    		return;    	
+    	}
+    	
+    	String testFile = "/home/justin/git/somlab/SerialTest/bin/StimCmd_test.txt";
+ 
+    	if(!estim.loadFile(testFile)){
+    		estim.shutdown();
+    		System.out.println("Error loading file ... Program exiting\n\n");
+    		return;
+    	}
+    	
+    	numTrials = estim.getNumberOfTrials();
+    	
+    	System.out.printf("\n File loaded %d trials.  Press Enter to trigger each trial\n", numTrials);
+    	
+    	
+    	for(int n = 0; n < numTrials; n++){
+    		estim.configureStim();
+    		System.out.printf("\nStimulator configured for trial %d, waiting to trigger ...", n + 1);
+    		System.in.read();
+    		estim.triggerStim();
+    		Thread.sleep(100);
+    		
+    	}
+    	
     	Thread.sleep(sleepTimeMs * 5);
     	
-//    	estim.queryBattery();
-//    	Thread.sleep(sleepTimeMs * 5);
+    	estim.queryBattery();
+    	Thread.sleep(sleepTimeMs * 5);
     	
     	
     	estim.shutdown();

@@ -35,24 +35,20 @@ public class ElectricalStimulator {
 	//final static int  COMMAND_SIZE_IN_BYTES = 12;
 	final static int BUFFER_SIZE = 8;
 	final static int CRC_BUFFER_SIZE = 10;
-	final static int READ_TIMEOUT = 1000;
+	final static int READ_TIMEOUT = 200;
+	double Vpos = 0;
+	double Vneg = 0;
+	
 
-	byte[] TriggerByteBuffer = {(byte) 240, (byte) 240, (byte) 240, 'T'}; // {1, 2, 3, 4, 5, 6, 7, 8, 9, 1};
-	//    index = 0;
-	//	cmd[index] = ;
-	//	index++;
-	//	cmd[index] = (byte)  240;
-	//	index++;
-	//	cmd[index] = (byte) 240;
-	//	index++;
-	//	cmd[index] = (byte) 'T';
-	//	index++;
+	byte[] TriggerChannel0ByteBuffer = {(byte) 240, (byte) 240, (byte) 240, (byte)'F', (byte) 0, (byte) 1, (byte) 1, (byte)'T' };
+
 	byte[] CRC_buffer = new byte[CRC_BUFFER_SIZE];
 	byte[]  cmd = new byte[PACKET_SIZE_IN_BYTES];
 	byte[] readBuff = new byte[PACKET_SIZE_IN_BYTES];
 
 	byte putDlyh,putDlyl,putDach,putDacl,putSw; 
 
+	
 	Vector<EStimTrial> trialVect = new Vector<EStimTrial>();
 	int curTrial = 0;
 
@@ -63,7 +59,8 @@ public class ElectricalStimulator {
 	String portStr =  "/dev/ttyUSB0";   //   "/dev/ttyACM0";   //   
 	boolean isCmdReceived = false;
 	boolean isGetValueMatched = false;
-	CMD CommandType = CMD.NONE;
+	
+	public CMD CommandType = CMD.NONE;
 
 
 
@@ -130,10 +127,91 @@ public class ElectricalStimulator {
 	}
 
 
-	// write new parameters to device
+	// test if the stimulator is powered on by requesting the battery status
+	public boolean isOff(){
+		byte[] localCmd = new byte[4];
+	//	int oldMask = 0;
+		
+		int index;
+		isCmdReceived = false;
+		
+		index = 0;
+		localCmd[index] = (byte) 240;
+		index++;
+		localCmd[index] = (byte) 240;
+		index++;
+		localCmd[index] = (byte) 240;
+		index++;
+		localCmd[index] = (byte) 'B';
+		index++;
+
+		try {
+			// make sure the input buffer is clear
+			serialPort.purgePort(serialPort.PURGE_RXCLEAR | serialPort.PURGE_TXCLEAR);
+			 // mask off RX events:
+	//		oldMask = serialPort.getEventsMask();
+	//		serialPort.setEventsMask(serialPort.MASK_RXCHAR + serialPort.MASK_RXFLAG);
+			
+			// set the CMD type
+			this.CommandType = CMD.PINGCMD;
+			
+			serialPort.writeBytes(localCmd);
+		    Thread.sleep(50);
+			
+
+			int n = serialPort.getInputBufferBytesCount();
+			byte[] localRead = new byte[n];
+
+			localRead = serialPort.readBytes(n, 10);			
+			
+			System.out.printf("\n%d bytes available ...", n);
+			
+			
+			if(n > 0){
+				System.out.println(String.format("%X",  localRead[0]));
+			} 
+			else {
+//				try {
+//					
+//					serialPort.setEventsMask(oldMask);
+//				} catch (SerialPortException e1) {
+//					// TODO Auto-generated catch block
+//					e1.printStackTrace();
+//				}
+				// reset the CMD type
+				this.CommandType = CMD.NONE;
+				return true;
+			}
+			
+
+		} catch (SerialPortException |   SerialPortTimeoutException | InterruptedException  e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+//			try {
+//				serialPort.setEventsMask(oldMask);				
+//			} catch (SerialPortException e1) {
+//				// TODO Auto-generated catch block
+//				e1.printStackTrace();
+//			}
+			// reset the CMD type
+			this.CommandType = CMD.NONE;
+			return true;
+		}
+//		try {
+//			serialPort.setEventsMask(oldMask);
+//		} catch (SerialPortException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+		return false;
+	}
+	
+	
+	
+	// write new parameters to device 
 	public void configureStim(){
 
-		System.out.printf("\nEStim::configureStim() : trial %d", curTrial);
+		System.out.printf("EStim::configureStim() : trial %d\n", curTrial + 1);
 
 		EStimTrial trial = trialVect.elementAt(curTrial);
 		Point pt = new Point();
@@ -142,38 +220,37 @@ public class ElectricalStimulator {
 			pt = trial.getPoint(i);
 			put4(pt.ch, pt.id, pt.delay, pt.amp, pt.sw);
 			try {
-				Thread.sleep(100);
+				Thread.sleep(10);
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 
 		}
-
-		//		try {
-		//			serialPort.writeString(stimParams);
-		//		} catch (SerialPortException e) {
-		//			// TODO Auto-generated catch block
-		//			e.printStackTrace();
-		//		}
 	}
 
 
 	// write the trigger message 
 	public void triggerStim() {
-		trigger4(0);
+		
+		
+
+		if( trialVect.elementAt(curTrial).getNumberOfPoints() > 0){
+			
+
+			CommandType = CMD.SINGLETRIGGERCMD;
+			
+			//trigger4(0); 
+			try {
+			   serialPort.writeBytes(TriggerChannel0ByteBuffer);
+			} catch (SerialPortException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+
 		curTrial++;
 
-
-		//		if( trialVect.elementAt(curTrial).getNumberOfPoints() > 0){
-		//			try {
-		//				curTrial++;
-		//				serialPort.writeBytes(cmd);
-		//			} catch (SerialPortException e) {
-		//				// TODO Auto-generated catch block
-		//				e.printStackTrace();
-		//			}
-		//		}
 	}
 
 
@@ -200,9 +277,6 @@ public class ElectricalStimulator {
 			index++;
 			cmd[index] = (byte) 'T';
 			index++;
-
-			//		System.out.printf("Data buffer: %X %X %X %X\n",
-			//	 		cmd[0],cmd[1],cmd[2],cmd[3]);
 
 			try {
 				serialPort.writeBytes(cmd);
@@ -301,7 +375,7 @@ public class ElectricalStimulator {
 
 	public enum CMD
 	{
-		NONE, PUTCMD, GETCMD, BATCMD, FULLTRIGGERCMD,  SINGLETRIGGERCMD, STIMMODE, RECORDMODE, CONFIGMODE
+		NONE, PUTCMD, GETCMD, BATCMD, FULLTRIGGERCMD,  SINGLETRIGGERCMD, PINGCMD, STIMMODE, RECORDMODE, CONFIGMODE
 
 	};
 
@@ -380,31 +454,13 @@ public class ElectricalStimulator {
 		cmd[index] = (byte) putSw;
 		index++;
 
-		//	       	if(false) {  
-		//	    	System.out.printf("Put4()  Data buffer: %X %X %X %X %X %X %X %X %X %X %X %X %X %X\n",
-		//	    			cmd[0], cmd[1], cmd[2], cmd[3],
-		//	    			cmd[4], cmd[5], cmd[6], cmd[7],
-		//	    			cmd[8], cmd[9], cmd[10], cmd[11],
-		//	    			cmd[12], cmd[13]
-		//	    			);
-		//	       	}
-
 		CommandType=CMD.PUTCMD;
 
-
 		try {
+			
 			serialPort.writeBytes(cmd);
-			//	    		Thread.sleep(100);
-			////	    		
-			////				Arrays.fill(readBuff, (byte)0);
-			//	    		readBuff = serialPort.readBytes(PACKET_SIZE_IN_BYTES, READ_TIMEOUT);				
-			//		    	System.out.printf("   (read)  : %2X %2X %2X %2X %2X %2X %2X %2X %2X %2X %2X %2X %2X %2X\n",
-			//    			readBuff[0], readBuff[1], readBuff[2], readBuff[3],
-			//    			readBuff[4], readBuff[5], readBuff[6], readBuff[7],
-			//    			readBuff[8], readBuff[9], readBuff[10], readBuff[11],
-			//    			readBuff[12], readBuff[13]);
 
-		} catch (SerialPortException e) { //  | SerialPortTimeoutException | InterruptedException e) {
+		} catch (SerialPortException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
@@ -675,7 +731,7 @@ public class ElectricalStimulator {
 				0x77,0x64,0x51,0x42,0x3B,0x28,0x1D,0x0E };
 
 		// unsigned gymnastics:
-			int ndx = 0, tmp = 0;
+		int ndx = 0, tmp = 0;
 
 		for(int i = 0; i < len ;  i++)
 		{
@@ -733,11 +789,15 @@ public class ElectricalStimulator {
 	}
 
 
+	
 	public int getNumberOfTrials() {
 		return trialVect.size();
 	}
 
-	void queryBattery() {
+	
+	
+	
+	public void queryBattery() {
 
 		byte[] localCmd = new byte[4];
 		double Vpos = 0.0;
@@ -745,6 +805,7 @@ public class ElectricalStimulator {
 
 		int index;
 		isCmdReceived = false;
+		
 		index = 0;
 		localCmd[index] = (byte) 240;
 		index++;
@@ -755,36 +816,53 @@ public class ElectricalStimulator {
 		localCmd[index] = (byte) 'B';
 		index++;
 
-
 		try {
 			// make sure the input buffer is clear
 			serialPort.purgePort(serialPort.PURGE_RXCLEAR | serialPort.PURGE_TXCLEAR);
 
+			// set the CMD type
+			this.CommandType = CMD.BATCMD;
+			
 			serialPort.writeBytes(localCmd);
 			Thread.sleep(100);
+			
 
-			int n = serialPort.getInputBufferBytesCount();
-			byte[] localRead = new byte[n];
+//			int n = serialPort.getInputBufferBytesCount();
+//			byte[] localRead = new byte[n];
+//
+//			localRead = serialPort.readBytes(n, READ_TIMEOUT);				
+//
+//			System.out.printf("   queryBattery() read %d bytes  : %2X %2X %2X %2X %2X %2X %2X \n", n,
+//					localRead[0], localRead[1], localRead[2], localRead[3],
+//					localRead[4], localRead[5], localRead[6]);
+//			Vpos = 15 * (localRead[1] * 256 + localRead[2]) /  4096;
+//			Vneg = 15 * (localRead[3] * 256 + localRead[4]) /  4096 - 10;
+//
+//			System.out.printf("  queryBattery() : Vpos = %4.4f, Vneg = %4.4f \n\n", Vpos, Vneg);
 
-			localRead = serialPort.readBytes(n, READ_TIMEOUT);				
-
-			System.out.printf("   queryBattery() read %d bytes  : %2X %2X %2X %2X %2X %2X %2X \n", n,
-					localRead[0], localRead[1], localRead[2], localRead[3],
-					localRead[4], localRead[5], localRead[6]);
-			Vpos = 15 * (localRead[1] * 256 + localRead[2]) /  4096;
-			Vneg = 15 * (localRead[3] * 256 + localRead[4]) /  4096 - 10;
-
-			System.out.printf("  queryBattery() : Vpos = %4.4f, Vneg = %4.4f \n\n", Vpos, Vneg);
-
-		} catch (SerialPortException | SerialPortTimeoutException | InterruptedException  e) {
+		} catch (SerialPortException |  InterruptedException  e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
-		CommandType=CMD.BATCMD;	
+	
 	}
 
+	void processIncomingBytes(byte[] buffer, ElectricalStimulator.CMD type){
+		if(type == ElectricalStimulator.CMD.BATCMD){
+			Vpos = 15 * (buffer[1] * 256 + buffer[2]) /  4096;
+			Vneg = 15 * (buffer[3] * 256 + buffer[4]) /  4096 - 10;
 
+			System.out.printf("  queryBattery() : Vpos = %4.4f, Vneg = %4.4f \n\n", Vpos, Vneg);
+			
+			// reset commandtype
+			this.CommandType = CommandType.NONE;
+			
+
+			
+				
+		}
+	}
 
 
 
