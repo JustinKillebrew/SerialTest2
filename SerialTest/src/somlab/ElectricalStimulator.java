@@ -56,7 +56,7 @@ public class ElectricalStimulator {
 	// the serial port object
 	SerialPort serialPort;
 
-	String portStr =  "/dev/ttyUSB0";   //   "/dev/ttyACM0";   //   
+	String portStr =   "/dev/ttyUSB0";   //    "/dev/ttyACM0";   // 
 	boolean isCmdReceived = false;
 	boolean isGetValueMatched = false;
 	
@@ -96,7 +96,7 @@ public class ElectricalStimulator {
 					String killCmd = "fuser -k " + portStr;
 					Runtime rt = Runtime.getRuntime();
 					try {
-						System.out.println("Trying to fuser -k");
+						System.out.println("Trying to fuser -k " + portStr );
 						rt.exec(killCmd);
 						Thread.sleep(100);
 					} catch (IOException | InterruptedException e) {
@@ -120,10 +120,13 @@ public class ElectricalStimulator {
 		// add event listener
 		try {
 			serialPort.addEventListener(new ElectricalStimulatorEvent(serialPort, this));
+//			serialPort.setDTR(true);
+//			serialPort.setDTR(false);
 		} catch (SerialPortException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
 	}
 
 
@@ -164,8 +167,7 @@ public class ElectricalStimulator {
 
 			localRead = serialPort.readBytes(n, 10);			
 			
-			System.out.printf("\n%d bytes available ...", n);
-			
+			//System.out.printf("\n%d bytes available ...", n);
 			
 			if(n > 0){
 				System.out.println(String.format("%X",  localRead[0]));
@@ -207,6 +209,33 @@ public class ElectricalStimulator {
 	}
 	
 	
+	// write new parameters to device 
+	public void configureStim(SachEstimSpec spec){
+
+		System.out.println("EStim::configureStim(SachEstimSpec spec) ");
+		EStimTrial trial = new EStimTrial();
+		
+		trial.generateFromEstimSpec(spec);
+		trialVect.clear();
+	//	trialVect.add(trial);
+	//	
+		Point pt = new Point();
+
+		for(int i = 0; i < trial.getNumberOfPoints(); i++){
+			pt = trial.getPoint(i);
+			put4(pt.ch, pt.id, pt.delay, pt.amp, pt.sw);
+			try {
+				Thread.sleep(10);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+		}
+		
+	}
+
+	
 	
 	// write new parameters to device 
 	public void configureStim(){
@@ -233,25 +262,24 @@ public class ElectricalStimulator {
 	// write the trigger message 
 	public void triggerStim() {
 		
+	//	if( trialVect.elementAt(curTrial).getNumberOfPoints() > 0){
 		
-
-		if( trialVect.elementAt(curTrial).getNumberOfPoints() > 0){
-			
-
 			CommandType = CMD.SINGLETRIGGERCMD;
 			
 			//trigger4(0); 
 			try {
-			   serialPort.writeBytes(TriggerChannel0ByteBuffer);
+				serialPort.setDTR(true);
+				serialPort.writeBytes(TriggerChannel0ByteBuffer);
+				serialPort.setDTR(false);
 			} catch (SerialPortException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
 
-		curTrial++;
+	//	curTrial++;
 
-	}
+//	}
 
 
 
@@ -849,6 +877,7 @@ public class ElectricalStimulator {
 	}
 
 	void processIncomingBytes(byte[] buffer, ElectricalStimulator.CMD type){
+		
 		if(type == ElectricalStimulator.CMD.BATCMD){
 			Vpos = 15 * (buffer[1] * 256 + buffer[2]) /  4096;
 			Vneg = 15 * (buffer[3] * 256 + buffer[4]) /  4096 - 10;
@@ -858,9 +887,11 @@ public class ElectricalStimulator {
 			// reset commandtype
 			this.CommandType = CommandType.NONE;
 			
-
-			
-				
+		}
+		else if(type == ElectricalStimulator.CMD.SINGLETRIGGERCMD){
+			System.out.print(buffer);
+			// reset commandtype
+			this.CommandType = CommandType.NONE;
 		}
 	}
 

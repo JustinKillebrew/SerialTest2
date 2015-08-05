@@ -38,7 +38,7 @@ public  class ElectricalStimulatorEvent
                
                 	if(stimRef.CommandType == CMD.BATCMD){
                 		stimRef.readBuff = portReference.readBytes();   
-                		System.out.println("Event:: BATCMD");
+                		//System.out.println("Event:: BATCMD");
                 		stimRef.processIncomingBytes(stimRef.readBuff, stimRef.CommandType.BATCMD);
                 	}
                 	else if(stimRef.CommandType == CMD.PUTCMD || stimRef.CommandType == CMD.SINGLETRIGGERCMD){

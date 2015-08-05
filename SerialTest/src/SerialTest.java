@@ -10,20 +10,30 @@ import java.util.Iterator;
 import java.util.ListIterator;
 import java.util.Random;
 
+import somlab.EStimTrial;
 import somlab.ElectricalStimulator;
+import somlab.SachEstimSpec;
 
 
 public class SerialTest {	 
 	
     public static void main(String[] args) throws InterruptedException, IOException {
-    
+        	
     	ElectricalStimulator estim = new ElectricalStimulator();
+    	
     	Thread.sleep(50);
     	int sleepTimeMs = 100;
     	int numTrials = 0;
     	
     	long startTime = System.currentTimeMillis();
     	long stopTime = startTime;
+    	
+    	
+//    	if(simulate(estim)){
+//    		
+//    		estim.shutdown();
+//    	  	return;
+//    	}
     	
     	
     	// make sure the stimulator is powered up!!
@@ -34,38 +44,75 @@ public class SerialTest {
     		return;    	
     	}
     	
-    	String testFile = "/home/justin/git/somlab/SerialTest/bin/StimCmd_test.txt";
- 
-    	if(!estim.loadFile(testFile)){
-    		estim.shutdown();
-    		System.out.println("Error loading file ... Program exiting\n\n");
-    		return;
-    	}
     	
-    	numTrials = estim.getNumberOfTrials();
+//	EStimTrial trial = new EStimTrial();
+		
+//		trial.twosComplement(-1652);
+//		trial.twosComplement(1652);
+		
+		
+		SachEstimSpec s = new SachEstimSpec(true,    // eStimFlag
+																			0, 	// objIdx
+													  new int[]{0},    	// channel []
+													 new int[]{0},     // baselineAmp []
+									     new int[]{-250}, 	// cathodalAmp [] 
+									     new int[]{250}, 	// anodalAmp[]
+									         new int[]{200}, 	// cathodalWidth []
+									  new double[]{200},     // pulseFreq []
+									    			 new int[]{100},     // interPhaseDur []
+									    			                       500,   	// startOffset
+									    			                    520);	    // stopOffset
+		//System.out.println(s.toXml());
+		
+		estim.configureStim(s);
+		System.in.read();
+		
+		estim.triggerStim();
+		Thread.sleep(1000);
+		//System.in.read();		
+		estim.shutdown();
+		
+		
     	
-    	System.out.printf("\n File loaded %d trials.  Press Enter to trigger each trial\n", numTrials);
     	
-    	
-    	for(int n = 0; n < numTrials; n++){
-    		estim.configureStim();
-    		System.out.printf("\nStimulator configured for trial %d, waiting to trigger ...", n + 1);
-    		System.in.read();
-    		estim.triggerStim();
-    		Thread.sleep(100);
-    		
-    	}
-    	
-    	Thread.sleep(sleepTimeMs * 5);
-    	
-    	estim.queryBattery();
-    	Thread.sleep(sleepTimeMs * 5);
-    	
-    	
-    	estim.shutdown();
-    	
-    	stopTime = System.currentTimeMillis();
-    	System.out.printf("\n\n%5.5f sec", ((double)stopTime - (double)startTime) / 1000.0);
+//    	
+//
+//    	String testFile = "/home/justin/git/somlab/SerialTest/bin/StimCmd_test2.txt";
+// 
+//    	if(!estim.loadFile(testFile)){
+//    		estim.shutdown();
+//    		System.out.println("Error loading file ... Program exiting\n\n");
+//    		return;
+//    	}
+//    	
+//    	numTrials = estim.getNumberOfTrials();
+//    	
+//    	System.out.printf("\n File loaded %d trials.  Press Enter to trigger each trial\n", numTrials);
+//    	
+//    	Thread.sleep(1000);
+//    	
+//    	for(int n = 0; n < numTrials; n++){
+//    		estim.configureStim();
+//    		System.out.printf("\nStimulator configured for trial %d, waiting to trigger ...", n + 1);
+//    		System.in.read();
+//    		//Thread.sleep(100);
+//    		estim.triggerStim();
+//    		//Thread.sleep(1000);
+//    		System.in.read();
+//    		
+//    		
+//    	}
+//    	
+//    	Thread.sleep(sleepTimeMs * 5);
+//    	
+//    	estim.queryBattery();
+//    	Thread.sleep(sleepTimeMs * 5);
+//    	
+//    	
+//    	estim.shutdown();
+//    	
+//    	stopTime = System.currentTimeMillis();
+//    	System.out.printf("\n\n%5.5f sec", ((double)stopTime - (double)startTime) / 1000.0);
     	
 //    	try {
 //			Thread.sleep(5000);
@@ -114,6 +161,19 @@ public class SerialTest {
 //    	estim.shutdown();
     	
     }
+    
+
+
+public static boolean simulate(ElectricalStimulator estim){
+	
+	System.out.println("Simulating full experiment");
+		
+	SachEstimSpec s = new SachEstimSpec(true, 0, new int[]{0,1}, new int[]{0,1}, new int[]{1,1}, new int[]{1,1}, new int[]{1,1}, new double[]{200,300}, new int[]{0, 0}, 0, 100);
+
+	estim.configureStim(s);
+	return true;
+}
+
  
 }
 
