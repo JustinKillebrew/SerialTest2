@@ -1,3 +1,4 @@
+package somlab;
 import java.io.IOException;
 import java.util.Vector;
 import java.util.ArrayList;
@@ -10,9 +11,6 @@ import java.util.Iterator;
 import java.util.ListIterator;
 import java.util.Random;
 
-import somlab.EStimTrial;
-import somlab.ElectricalStimulator;
-import somlab.SachEstimSpec;
 
 
 public class SerialTest {	 
