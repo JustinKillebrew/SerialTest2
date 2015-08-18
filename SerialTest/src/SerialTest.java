@@ -28,6 +28,8 @@ public class SerialTest {
     	long startTime = System.currentTimeMillis();
     	long stopTime = startTime;
     	
+    	//   JK 18 Aug
+    	
     	
 //    	if(simulate(estim)){
 //    		
