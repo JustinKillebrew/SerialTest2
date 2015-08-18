@@ -35,13 +35,14 @@ public class SerialTest {
 //    	  	return;
 //    	}
     	
-    	
+    	estim.queryBattery();
+//    	
     	// make sure the stimulator is powered up!!
     	if(estim.isOff()){
     		System.out.println("Stimulator is off ... ");
-    		estim.shutdown();
+    		//estim.shutdown();
     		
-    		return;    	
+    		//return;    	
     	}
     	
     	
@@ -51,24 +52,28 @@ public class SerialTest {
 //		trial.twosComplement(1652);
 		
 		
-		SachEstimSpec s = new SachEstimSpec(true,    // eStimFlag
-																			0, 	// objIdx
-													  new int[]{0},    	// channel []
-													 new int[]{0},     // baselineAmp []
-									     new int[]{-250}, 	// cathodalAmp [] 
-									     new int[]{250}, 	// anodalAmp[]
-									         new int[]{200}, 	// cathodalWidth []
-									  new double[]{200},     // pulseFreq []
-									    			 new int[]{100},     // interPhaseDur []
-									    			                       500,   	// startOffset
-									    			                    520);	    // stopOffset
+		SachEstimSpec spec = new SachEstimSpec(true,   						// eStimFlag
+																		0, 									// objIdx
+																		new int[]{0},    				// channel []
+																		new int[]{0},     				// baselineAmp []
+																		new int[]{-250}, 			// cathodalAmp [] 
+																		new int[]{250}, 				// anodalAmp[]
+																		new int[]{200}, 				// cathodalWidth []
+																		new double[]{200},     	// pulseFreq []
+																		new int[]{100},     			// interPhaseDur []
+																		1,   								// startOffset
+																		21);	    						// stopOffset
 		//System.out.println(s.toXml());
 		
-		estim.configureStim(s);
+		estim.configureStim(spec);
+		System.out.println("Hit Enter to trigger");
 		System.in.read();
 		
-		estim.triggerStim();
-		Thread.sleep(1000);
+		for( int i = 1; i <= 100; i++){
+			estim.triggerStim();
+			System.out.println("triggered " + i);
+			Thread.sleep(1000);
+		}
 		//System.in.read();		
 		estim.shutdown();
 		

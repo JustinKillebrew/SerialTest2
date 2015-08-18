@@ -56,7 +56,7 @@ public class ElectricalStimulator {
 	// the serial port object
 	SerialPort serialPort;
 
-	String portStr =   "/dev/ttyUSB0";   //    "/dev/ttyACM0";   // 
+	String portStr =   "/dev/ttyACM0";   //  "/dev/ttyUSB0";   //   
 	boolean isCmdReceived = false;
 	boolean isGetValueMatched = false;
 	
